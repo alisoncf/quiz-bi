@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Inteligência de Negócio</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #111009;
+  --paper: #f7f4ee;
+  --paper2: #efeae0;
+  --paper3: #e5dfd2;
+  --red: #c0392b;
+  --blue: #1a4fa0;
+  --green: #1a6840;
+  --gold: #b8860b;
+  --border: #c8bfaa;
+  --muted: #7a7060;
+  --radius: 4px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ── COVER ── */
+#cover {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+#cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--paper3) 39px, var(--paper3) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--paper3) 39px, var(--paper3) 40px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cover-inner { position: relative; z-index: 1; max-width: 560px; }
+
+.cover-tag {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 2px;
+  margin-bottom: 28px;
+}
+
+.cover-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  line-height: 1.0;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.cover-title em {
+  font-style: italic;
+  color: var(--red);
+}
+
+.cover-subtitle {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.cover-meta {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 44px;
+  flex-wrap: wrap;
+}
+
+.cover-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cover-meta-item .val {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.cover-meta-item .lbl {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+  align-self: center;
+}
+
+.btn-start {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 16px 48px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-start:hover { background: var(--red); transform: translateY(-2px); }
+
+/* ── QUIZ SHELL ── */
+#quiz-shell { display: none; max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
+
+/* Top bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 36px;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.quiz-label {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.2rem;
+  flex: 1;
+  color: var(--muted);
+}
+
+.q-counter {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.prog-track {
+  flex: 1;
+  height: 3px;
+  background: var(--paper3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+
+/* Question */
+.q-block {
+  animation: qIn 0.35s ease;
+}
+
+@keyframes qIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.q-topic {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.q-num {
+  font-family: 'Instrument Serif', serif;
+  font-size: 0.95rem;
+  color: var(--red);
+  margin-bottom: 6px;
+}
+
+.q-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.35rem;
+  line-height: 1.5;
+  margin-bottom: 28px;
+  letter-spacing: -0.01em;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.opt-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.5;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.opt-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--paper2);
+}
+
+.opt-letter {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  min-width: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.opt-btn.selected {
+  border-color: var(--ink);
+  background: var(--paper2);
+}
+
+.opt-btn.correct {
+  border-color: var(--green);
+  background: #edf7f0;
+}
+
+.opt-btn.correct .opt-letter { color: var(--green); }
+
+.opt-btn.wrong {
+  border-color: var(--red);
+  background: #fdf0ef;
+}
+
+.opt-btn.wrong .opt-letter { color: var(--red); }
+
+.opt-btn.reveal-correct {
+  border-color: var(--green);
+  background: #edf7f0;
+  opacity: 0.7;
+}
+
+.opt-btn:disabled { cursor: default; }
+
+/* Feedback */
+.feedback-box {
+  display: none;
+  background: var(--paper2);
+  border-left: 3px solid var(--ink);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 28px;
+  animation: qIn 0.25s ease;
+}
+
+.feedback-box.visible { display: block; }
+.feedback-box.fb-correct { border-color: var(--green); }
+.feedback-box.fb-wrong { border-color: var(--red); }
+
+.fb-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.fb-correct .fb-label { color: var(--green); }
+.fb-wrong .fb-label { color: var(--red); }
+
+/* Nav buttons */
+.q-nav {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-confirm, .btn-next {
+  padding: 11px 28px;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1.5px solid var(--ink);
+}
+
+.btn-confirm {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn-confirm:hover { background: var(--red); border-color: var(--red); }
+.btn-confirm:disabled { background: var(--border); border-color: var(--border); color: var(--muted); cursor: not-allowed; }
+
+.btn-next {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn-next:hover { background: var(--ink); color: var(--paper); }
+
+/* ── RESULTS ── */
+#results { display: none; max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
+
+.result-hero {
+  text-align: center;
+  padding: 48px 20px 40px;
+  border-bottom: 1.5px solid var(--border);
+  margin-bottom: 36px;
+}
+
+.result-hero .score-big {
+  font-family: 'Instrument Serif', serif;
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.result-hero .score-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.result-hero .score-verdict {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+
+.result-hero .score-sub {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.result-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+.breakdown-cell {
+  background: var(--paper);
+  padding: 18px 16px;
+  text-align: center;
+}
+
+.breakdown-cell .bc-val {
+  font-family: 'Instrument Serif', serif;
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.breakdown-cell .bc-lbl {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bc-green .bc-val { color: var(--green); }
+.bc-red .bc-val { color: var(--red); }
+.bc-gold .bc-val { color: var(--gold); }
+
+/* Review list */
+.review-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.review-item {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--paper2);
+  cursor: pointer;
+}
+
+.review-status {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-c { color: var(--green); }
+.status-w { color: var(--red); }
+
+.review-qtext {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.review-body {
+  display: none;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.855rem;
+  line-height: 1.6;
+}
+
+.review-body.open { display: block; }
+
+.review-your, .review-correct-ans {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.review-your-val { margin-bottom: 10px; }
+.review-correct-ans-val { color: var(--green); margin-bottom: 10px; font-weight: 500; }
+.review-exp { color: var(--muted); font-style: italic; }
+
+.btn-restart {
+  display: block;
+  margin: 40px auto 0;
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  padding: 12px 32px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+
+.btn-restart:hover { background: var(--ink); color: var(--paper); }
+
+@media (max-width: 560px) {
+  .result-breakdown { grid-template-columns: 1fr; }
+  .q-text { font-size: 1.15rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div id="cover">
+  <div class="cover-inner">
+    <div class="cover-tag">Avaliação · Aulas 1–10</div>
+    <h1 class="cover-title">Inteligência<br>de <em>Negócio</em></h1>
+    <p class="cover-subtitle">Fundamentos, análise descritiva e pré-processamento de dados.<br>Responda com atenção — cada questão conta.</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="val">20</span>
+        <span class="lbl">Questões</span>
+      </div>
+      <div class="divider"></div>
+      <div class="cover-meta-item">
+        <span class="val">4</span>
+        <span class="lbl">Alternativas</span>
+      </div>
+      <div class="divider"></div>
+      <div class="cover-meta-item">
+        <span class="val">~30</span>
+        <span class="lbl">Minutos</span>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">Iniciar avaliação →</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-shell">
+  <div class="top-bar">
+    <span class="quiz-label">Inteligência de Negócio</span>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <span class="q-counter" id="q-counter">1 / 20</span>
+  </div>
+  <div id="q-area"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="results"></div>
+
+<script>
+const questions = [
+  // ── VISÃO GERAL / FUNDAMENTOS ──
+  {
+    topic: 'Visão geral de BI',
+    text: 'Qual é o principal objetivo da Inteligência de Negócio (BI)?',
+    opts: [
+      'Substituir analistas humanos por sistemas automatizados de decisão',
+      'Transformar dados brutos em informações que apoiem a tomada de decisão estratégica',
+      'Armazenar grandes volumes de dados históricos para auditorias futuras',
+      'Criar relatórios financeiros obrigatórios para órgãos reguladores'
+    ],
+    answer: 1,
+    exp: 'BI é um conjunto de processos, tecnologias e ferramentas que transforma dados brutos em informação significativa para apoiar decisões de negócio — não substitui o tomador de decisão, mas o subsidia.'
+  },
+  {
+    topic: 'Fundamentos de BI',
+    text: 'Na pirâmide do conhecimento (DIKW), qual é a relação correta entre dados e informação?',
+    opts: [
+      'Informação é um subconjunto dos dados, com menor volume e maior redundância',
+      'Dados são fatos brutos sem contexto; informação é o resultado de processar e contextualizar esses dados',
+      'Dados e informação são sinônimos utilizados indistintamente na literatura de BI',
+      'Informação precede os dados, pois define quais dados devem ser coletados'
+    ],
+    answer: 1,
+    exp: 'Na hierarquia DIKW (Data → Information → Knowledge → Wisdom), dados são fatos brutos e descontextualizados. Quando organizados e interpretados com contexto, tornam-se informação.'
+  },
+  {
+    topic: 'Fundamentos de BI',
+    text: 'Um data warehouse se diferencia de um banco de dados transacional (OLTP) principalmente porque:',
+    opts: [
+      'Armazena apenas dados em tempo real e é otimizado para escrita frequente',
+      'É orientado a assuntos, integrado, variável no tempo e não volátil — otimizado para análise',
+      'Utiliza exclusivamente a linguagem NoSQL para garantir escalabilidade horizontal',
+      'Substitui completamente os sistemas OLTP ao centralizar operações e análises'
+    ],
+    answer: 1,
+    exp: 'Bill Inmon definiu o data warehouse pelas quatro características: orientado a assunto, integrado, variável no tempo e não volátil. Diferente do OLTP, é otimizado para consultas analíticas complexas (OLAP), não para transações.'
+  },
+  // ── DASHBOARDS ──
+  {
+    topic: 'Dashboards',
+    text: 'Qual princípio de design de dashboards está sendo violado quando um painel exibe 15 KPIs simultaneamente com gráficos de pizza, barras, linhas e tabelas em uma única tela?',
+    opts: [
+      'Princípio da consistência cromática',
+      'Princípio da carga cognitiva mínima',
+      'Princípio da hierarquia de fontes de dados',
+      'Princípio da interoperabilidade de sistemas'
+    ],
+    answer: 1,
+    exp: 'Dashboards eficazes respeitam os limites da carga cognitiva humana. Exibir muitos elementos visuais distintos simultaneamente sobrecarrega o usuário e dificulta a identificação do insight principal. A recomendação é focar nos KPIs mais relevantes para o público-alvo.'
+  },
+  {
+    topic: 'Dashboards',
+    text: 'Um dashboard estratégico, um dashboard tático e um dashboard operacional se diferenciam principalmente em:',
+    opts: [
+      'Volume de dados processados, sendo o estratégico o que processa mais dados por segundo',
+      'Público-alvo, horizonte temporal e nível de detalhe das informações exibidas',
+      'Tipo de banco de dados utilizado como fonte: relacional, NoSQL ou em nuvem',
+      'Frequência de atualização, sendo o estratégico atualizado em tempo real'
+    ],
+    answer: 1,
+    exp: 'Dashboards estratégicos são voltados à alta gestão, com visão de longo prazo e alto nível de agregação. Táticos focam em gerentes médios com horizonte de médio prazo. Operacionais são para equipes de execução, com dados granulares e atualizações frequentes.'
+  },
+  // ── TOMADA DE DECISÃO ──
+  {
+    topic: 'Tomada de decisão',
+    text: 'O modelo de Simon para tomada de decisão divide o processo em três fases. Qual sequência está correta?',
+    opts: [
+      'Escolha → Inteligência → Design',
+      'Inteligência → Design → Escolha',
+      'Design → Inteligência → Implementação',
+      'Análise → Síntese → Avaliação'
+    ],
+    answer: 1,
+    exp: 'Herbert Simon propôs três fases: (1) Inteligência — identificar o problema e coletar dados; (2) Design — desenvolver e modelar alternativas de solução; (3) Escolha — selecionar a melhor alternativa. O modelo é amplamente referenciado em Sistemas de Suporte à Decisão.'
+  },
+  {
+    topic: 'Tomada de decisão',
+    text: 'Decisões não estruturadas são aquelas em que:',
+    opts: [
+      'Há procedimentos padronizados e os critérios de decisão são totalmente conhecidos de antemão',
+      'O problema, os critérios e as alternativas não são completamente definidos, exigindo julgamento humano',
+      'Apenas dados quantitativos são usados, sem nenhum componente qualitativo',
+      'A decisão é automatizada por algoritmos sem qualquer intervenção humana'
+    ],
+    answer: 1,
+    exp: 'Decisões não estruturadas envolvem situações novas, complexas ou ambíguas onde não há procedimento padrão definido. Requerem julgamento, intuição e criatividade. Diferem das estruturadas (rotineiras, com critérios claros) e das semiestruturadas (combinação dos dois).'
+  },
+  // ── TIPOS DE ANÁLISE ──
+  {
+    topic: 'Tipos de análise',
+    text: 'Uma empresa de e-commerce usou dados históricos de compras para identificar quais clientes têm maior probabilidade de cancelar a assinatura nos próximos 30 dias. Que tipo de análise está sendo aplicada?',
+    opts: [
+      'Análise descritiva',
+      'Análise diagnóstica',
+      'Análise preditiva',
+      'Análise prescritiva'
+    ],
+    answer: 2,
+    exp: 'A análise preditiva usa dados históricos e modelos estatísticos ou de machine learning para estimar eventos futuros. Prever churn (cancelamento) é um caso clássico. A descritiva responde "o que aconteceu?", a diagnóstica "por quê?" e a prescritiva "o que devemos fazer?"'
+  },
+  {
+    topic: 'Tipos de análise',
+    text: 'A análise prescritiva se diferencia da preditiva porque ela:',
+    opts: [
+      'Usa apenas dados históricos sem qualquer projeção futura',
+      'Além de prever o que vai acontecer, recomenda ações para influenciar o resultado',
+      'Foca exclusivamente na visualização de dados passados em dashboards',
+      'É restrita a domínios financeiros e de marketing'
+    ],
+    answer: 1,
+    exp: 'A análise prescritiva vai além da previsão: ela recomenda a melhor ação a tomar diante de um cenário futuro previsto. Utiliza técnicas como otimização, simulação e sistemas especialistas. É o nível mais avançado na escala de maturidade analítica.'
+  },
+  // ── ANÁLISE DESCRITIVA / TAXONOMIA ──
+  {
+    topic: 'Análise descritiva',
+    text: 'Na taxonomia da análise descritiva, qual é o papel central das medidas de tendência central?',
+    opts: [
+      'Identificar valores discrepantes (outliers) que distorcem a distribuição dos dados',
+      'Resumir um conjunto de dados em um único valor representativo da distribuição',
+      'Medir o grau de correlação entre duas variáveis quantitativas',
+      'Classificar variáveis em categóricas e numéricas para fins de modelagem'
+    ],
+    answer: 1,
+    exp: 'Medidas de tendência central (média, mediana, moda) buscam representar um conjunto de valores com um único número "típico". Elas descrevem onde os dados se concentram, sendo fundamentais para qualquer análise descritiva inicial.'
+  },
+  {
+    topic: 'Análise descritiva',
+    text: 'Em um dataset de salários de uma empresa com 200 funcionários e 3 executivos com salários 20x acima da média, qual medida de tendência central melhor representa a realidade da maioria dos funcionários?',
+    opts: [
+      'Média aritmética, pois considera todos os valores igualmente',
+      'Mediana, pois não é influenciada pelos valores extremos dos executivos',
+      'Moda, pois indica o salário mais frequente e portanto mais representativo',
+      'Média ponderada, atribuindo peso zero aos valores discrepantes'
+    ],
+    answer: 1,
+    exp: 'A mediana é robusta a outliers — ela representa o valor central da distribuição ordenada e não é distorcida por valores extremos. Em distribuições assimétricas (como salários), a mediana é mais representativa da "maioria" do que a média, que puxa para cima por causa dos executivos.'
+  },
+  // ── ADEQUAÇÃO DOS DADOS ──
+  {
+    topic: 'Adequação dos dados',
+    text: 'Um dataset de clientes tem nome, e-mail e CPF, mas não inclui histórico de compras, canal de aquisição nem frequência de acesso ao app. Para construir um modelo de recomendação de produtos, qual característica de adequação está comprometida?',
+    opts: [
+      'Atualidade',
+      'Validade',
+      'Riqueza',
+      'Consistência'
+    ],
+    answer: 2,
+    exp: 'Riqueza refere-se à quantidade e variedade de atributos disponíveis no dataset. Um dataset com poucos campos relevantes para o objetivo analítico não tem riqueza suficiente. Para um modelo de recomendação, o histórico comportamental é essencial e está ausente.'
+  },
+  {
+    topic: 'Adequação dos dados',
+    text: 'Um campo de "data de nascimento" que aceita "99/99/9999" como entrada válida viola qual característica de adequação dos dados?',
+    opts: [
+      'Confiabilidade da fonte',
+      'Atualidade',
+      'Validade',
+      'Granularidade'
+    ],
+    answer: 2,
+    exp: 'Validade diz respeito a se os valores respeitam o domínio, o formato e as regras de negócio esperados. "99/99/9999" é uma data impossível — a ausência de regras de validação na entrada de dados compromete diretamente a validade do campo.'
+  },
+  // ── PRÉ-PROCESSAMENTO ──
+  {
+    topic: 'Pré-processamento',
+    text: 'Quais são as quatro fases do pré-processamento de dados, na ordem correta em que geralmente são realizadas?',
+    opts: [
+      'Redução → Limpeza → Integração → Transformação',
+      'Limpeza → Integração → Transformação → Redução',
+      'Integração → Transformação → Limpeza → Redução',
+      'Transformação → Redução → Limpeza → Integração'
+    ],
+    answer: 1,
+    exp: 'A sequência clássica é: (1) Limpeza — tratar valores ausentes, duplicados e inconsistências; (2) Integração — combinar dados de fontes distintas; (3) Transformação — normalizar, codificar, agregar; (4) Redução — reduzir dimensionalidade ou volume mantendo informação relevante.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'Durante a limpeza de dados, um analista encontra 8% de valores ausentes na coluna "renda mensal". Qual abordagem é mais adequada para dados ausentes do tipo MAR (Missing At Random)?',
+    opts: [
+      'Excluir todas as linhas com valores ausentes, independentemente do percentual',
+      'Substituir pelos valores ausentes por zero para preservar todas as linhas',
+      'Imputar os valores usando mediana ou modelo preditivo, preservando as demais informações do registro',
+      'Manter os valores ausentes e informar ao modelo que aquele campo é irrelevante'
+    ],
+    answer: 2,
+    exp: 'Para dados MAR, a imputação é preferível à exclusão (que desperdiça dados) e à substituição por zero (que distorce a distribuição). Usar a mediana é robusto a outliers; imputação por modelo (como KNN ou regressão) é ainda mais precisa quando há correlações entre variáveis.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'Normalização e padronização são técnicas de transformação de dados. A padronização (Z-score) é preferida quando:',
+    opts: [
+      'Os dados têm distribuição uniforme e não há outliers significativos',
+      'É necessário que todos os valores fiquem estritamente no intervalo [0, 1]',
+      'O algoritmo assume distribuição gaussiana ou é sensível a outliers extremos',
+      'Os dados são categóricos e precisam ser convertidos para valores numéricos'
+    ],
+    answer: 2,
+    exp: 'A padronização Z-score transforma os dados para média 0 e desvio padrão 1, sendo preferida quando o algoritmo assume distribuição normal (ex: SVM, PCA, regressão logística) ou quando há outliers, pois não força um intervalo fixo como a normalização min-max.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'Na etapa de integração de dados, o problema de "conflito de representação" ocorre quando:',
+    opts: [
+      'Dois sistemas usam chaves primárias diferentes para o mesmo conceito, dificultando o JOIN',
+      'O mesmo atributo é representado de formas diferentes em fontes distintas — ex: "M/F" em um sistema e "Masculino/Feminino" em outro',
+      'A largura de banda de rede é insuficiente para transferir grandes volumes de dados entre sistemas',
+      'Um sistema legado não suporta o formato UTF-8, gerando erros de codificação de caracteres'
+    ],
+    answer: 1,
+    exp: 'Conflito de representação é um dos problemas clássicos na integração: a mesma entidade ou atributo é codificada de maneiras diferentes em fontes distintas. Resolver isso exige mapeamento semântico e padronização antes de unir os datasets.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'A técnica de redução de dimensionalidade PCA (Principal Component Analysis) tem como objetivo principal:',
+    opts: [
+      'Remover linhas duplicadas para reduzir o tamanho do dataset',
+      'Transformar variáveis correlacionadas em um conjunto menor de variáveis independentes que preservam a variância máxima',
+      'Selecionar manualmente as features mais relevantes com base no conhecimento de domínio',
+      'Aumentar o número de observações por meio de técnicas de oversampling'
+    ],
+    answer: 1,
+    exp: 'PCA cria novos eixos (componentes principais) que são combinações lineares das variáveis originais, ordenados pela variância explicada. Permite reduzir dimensionalidade com mínima perda de informação, sendo especialmente útil quando há alta multicolinearidade entre variáveis.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'Em Python, ao usar pandas para tratar valores ausentes, qual instrução identifica corretamente o número de nulos por coluna em um DataFrame chamado df?',
+    opts: [
+      'df.count_null()',
+      'df.missing_values()',
+      'df.isnull().sum()',
+      'df.check_na(axis=1)'
+    ],
+    answer: 2,
+    exp: 'df.isnull() retorna um DataFrame booleano (True onde há NaN). Aplicar .sum() soma os True por coluna, revelando a contagem de valores ausentes em cada campo. É a forma idiomática e padrão no pandas.'
+  },
+  {
+    topic: 'Pré-processamento',
+    text: 'Um dataset de vendas possui uma coluna "categoria_produto" com valores textuais como "Eletrônicos", "Roupas" e "Alimentos". Para usar essa coluna em um modelo de machine learning, a técnica mais indicada é:',
+    opts: [
+      'Substituir cada categoria por um número sequencial (1, 2, 3) diretamente',
+      'Remover a coluna, pois modelos não aceitam variáveis categóricas',
+      'Aplicar One-Hot Encoding para criar variáveis binárias sem impor ordenação implícita',
+      'Calcular a frequência de cada categoria e usar esse valor como feature numérica'
+    ],
+    answer: 2,
+    exp: 'One-Hot Encoding cria uma coluna binária para cada categoria, evitando o problema de ordenação implícita que ocorre ao substituir por números sequenciais (o modelo interpretaria "3 > 2 > 1" como uma relação de magnitude inexistente entre as categorias).'
+  }
+];
+
+let currentQ = 0;
+let selectedOpt = null;
+let confirmed = false;
+let userAnswers = [];
+
+function startQuiz() {
+  document.getElementById('cover').style.display = 'none';
+  document.getElementById('quiz-shell').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  selectedOpt = null;
+  confirmed = false;
+  const q = questions[currentQ];
+  updateProgress();
+
+  const letters = ['A', 'B', 'C', 'D'];
+  const optsHtml = q.opts.map((o, i) => `
+    <button class="opt-btn" onclick="selectOpt(${i})" id="opt-${i}">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${o}</span>
+    </button>
+  `).join('');
+
+  document.getElementById('q-area').innerHTML = `
+    <div class="q-block">
+      <div class="q-topic">${q.topic}</div>
+      <div class="q-num">Questão ${currentQ + 1} de ${questions.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options-list">${optsHtml}</div>
+      <div class="feedback-box" id="feedback"></div>
+      <div class="q-nav">
+        <button class="btn-confirm" id="btn-confirm" onclick="confirmAnswer()" disabled>Confirmar</button>
+      </div>
+    </div>
+  `;
+}
+
+function selectOpt(i) {
+  if (confirmed) return;
+  selectedOpt = i;
+  document.querySelectorAll('.opt-btn').forEach((b, idx) => {
+    b.classList.toggle('selected', idx === i);
+  });
+  document.getElementById('btn-confirm').disabled = false;
+}
+
+function confirmAnswer() {
+  if (selectedOpt === null || confirmed) return;
+  confirmed = true;
+
+  const q = questions[currentQ];
+  const isCorrect = selectedOpt === q.answer;
+  userAnswers[currentQ] = { selected: selectedOpt, correct: q.answer, isCorrect };
+
+  document.querySelectorAll('.opt-btn').forEach((b, i) => {
+    b.disabled = true;
+    b.classList.remove('selected');
+    if (i === q.answer) b.classList.add(isCorrect && i === selectedOpt ? 'correct' : 'reveal-correct');
+    if (i === selectedOpt && !isCorrect) b.classList.add('wrong');
+    if (i === selectedOpt && isCorrect) b.classList.add('correct');
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback-box visible ' + (isCorrect ? 'fb-correct' : 'fb-wrong');
+  fb.innerHTML = `
+    <div class="fb-label">${isCorrect ? '✓ Correto' : '✗ Incorreto'}</div>
+    ${q.exp}
+  `;
+
+  const nav = document.querySelector('.q-nav');
+  const isLast = currentQ === questions.length - 1;
+  nav.innerHTML = `
+    <button class="btn-next" onclick="${isLast ? 'showResults()' : 'nextQuestion()'}">
+      ${isLast ? 'Ver resultado →' : 'Próxima →'}
+    </button>
+  `;
+}
+
+function nextQuestion() {
+  currentQ++;
+  renderQuestion();
+}
+
+function updateProgress() {
+  const pct = (currentQ / questions.length) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-counter').textContent = `${currentQ + 1} / ${questions.length}`;
+}
+
+function showResults() {
+  document.getElementById('quiz-shell').style.display = 'none';
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+
+  const total = questions.length;
+  const correct = userAnswers.filter(a => a.isCorrect).length;
+  const wrong = total - correct;
+  const pct = Math.round((correct / total) * 100);
+
+  const verdicts = [
+    [90, 'Excelente domínio do conteúdo.'],
+    [70, 'Bom desempenho, mas há pontos a revisar.'],
+    [50, 'Desempenho regular — revise os tópicos em vermelho.'],
+    [0,  'É hora de revisar o material com atenção.']
+  ];
+  const verdict = verdicts.find(v => pct >= v[0])[1];
+
+  const letters = ['A', 'B', 'C', 'D'];
+
+  const reviewItems = questions.map((q, i) => {
+    const ua = userAnswers[i];
+    const statusCls = ua.isCorrect ? 'status-c' : 'status-w';
+    const statusIcon = ua.isCorrect ? '✓' : '✗';
+    const yourAns = `${letters[ua.selected]}) ${q.opts[ua.selected]}`;
+    const corrAns = `${letters[q.answer]}) ${q.opts[q.answer]}`;
+    const wrongBlock = ua.isCorrect ? '' : `
+      <div class="review-your">Sua resposta</div>
+      <div class="review-your-val">${yourAns}</div>
+      <div class="review-correct-ans">Resposta correta</div>
+      <div class="review-correct-ans-val">${corrAns}</div>
+    `;
+    return `
+      <div class="review-item">
+        <div class="review-header" onclick="toggleReview(this)">
+          <span class="review-status ${statusCls}">${statusIcon} Q${i+1}</span>
+          <span class="review-qtext">${q.text}</span>
+        </div>
+        <div class="review-body">
+          ${wrongBlock}
+          <div class="review-exp">${q.exp}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  resultsEl.innerHTML = `
+    <div class="result-hero">
+      <div class="score-label">Sua pontuação</div>
+      <div class="score-big">${pct}<span style="font-size:2rem">%</span></div>
+      <div class="score-verdict">${verdict}</div>
+      <div class="score-sub">${correct} acertos de ${total} questões</div>
+    </div>
+    <div class="result-breakdown">
+      <div class="breakdown-cell bc-green">
+        <div class="bc-val">${correct}</div>
+        <div class="bc-lbl">Corretas</div>
+      </div>
+      <div class="breakdown-cell bc-red">
+        <div class="bc-val">${wrong}</div>
+        <div class="bc-lbl">Erradas</div>
+      </div>
+      <div class="breakdown-cell bc-gold">
+        <div class="bc-val">${pct}%</div>
+        <div class="bc-lbl">Aproveitamento</div>
+      </div>
+    </div>
+    <h2 class="review-title">Revisão das questões</h2>
+    ${reviewItems}
+    <button class="btn-restart" onclick="restartQuiz()">↺ Refazer avaliação</button>
+  `;
+
+  resultsEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleReview(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  selectedOpt = null;
+  confirmed = false;
+  userAnswers = [];
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('quiz-shell').style.display = 'block';
+  renderQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
